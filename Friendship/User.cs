@@ -18,6 +18,7 @@ namespace Friendship
         public string FindFf { get; set; }
         public sbyte findSex;
         public bool IsDonate { get; set; } = false;
+        public bool IsRegistered { get; set; } = false;
         public enum State { main, city, age,sex, photo, aboutmy,find,selectSex,wait }
         public State state;
     }

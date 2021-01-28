@@ -16,9 +16,9 @@ namespace Friendship
 
         public static ReplyKeyboardMarkup Keyboard = new ReplyKeyboardMarkup(new List<List<KeyboardButton>>
         {
-            new List<KeyboardButton>() {new KeyboardButton("Lorem ipsum"), new KeyboardButton("Lorem ipsum2")},
-            new List<KeyboardButton>() {new KeyboardButton("Lorem ipsum3"), new KeyboardButton("Lorem ipsum4")},
-            new List<KeyboardButton>() {new KeyboardButton("Lorem ipsum5")}, new List<KeyboardButton>(){ new KeyboardButton("Профиль") }
+            new List<KeyboardButton>() {new KeyboardButton("⚡️ Найти собеседника"), new KeyboardButton("💎 Наш канал")},
+            new List<KeyboardButton>() {new KeyboardButton("🔑 Полезные ссылки"), new KeyboardButton("💰 Подписка")},
+            new List<KeyboardButton>() {new KeyboardButton("ℹ️ Информация") }, new List<KeyboardButton>(){ new KeyboardButton("🆔 Ваша анкета") }
         });
 
         public static List<User> WaitList = new List<User>();
@@ -60,7 +60,7 @@ namespace Friendship
         }
         static Random rnd = new Random();
         private static readonly InlineKeyboardMarkup KeyBack = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("Назад", "back"));
-        private static readonly InlineKeyboardMarkup Keys = new InlineKeyboardMarkup(new List<List<InlineKeyboardButton>> {new List<InlineKeyboardButton>{InlineKeyboardButton.WithCallbackData("FF","find_FF")}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("NS", "find_NS" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("CS", "find_CS") }, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("CM", "find_CM" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("FM", "find_FM" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("DM", "find_DM" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Назад", "back") } });
+        private static readonly InlineKeyboardMarkup Keys = new InlineKeyboardMarkup(new List<List<InlineKeyboardButton>> {new List<InlineKeyboardButton>{InlineKeyboardButton.WithCallbackData("Фашизм", "find_FH")}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Национализм", "find_NC" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Национал-социализм", "find_NS") }, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Коммунизм", "find_CM" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Либертарианство", "find_LB" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Феменизм", "find_FE" )}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Либерализм", "find_LB")}, new List<InlineKeyboardButton> { InlineKeyboardButton.WithCallbackData("Назад", "back") } });
         private static async void Tgbot_OnCallbackQuery(object sender, Telegram.Bot.Args.CallbackQueryEventArgs e)
         {
             try
@@ -197,6 +197,14 @@ namespace Friendship
                     case "sex_male":
                     {
                         if (user.state != User.State.selectSex) return;
+                        if (!user.IsDonate && user.Sex == 0)
+                        {
+                            user.state = User.State.wait;
+                            await Tgbot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId,
+                                "Для поиска собеседников женского пола необходимо преобрести платную подписку.");
+                            SendBill(user);
+                            return;
+                        }
                         any = Users.ToList().Where(x => x.FindFf == user.FindFf && x.Sex == 1 && x.Id != user.Id).ToList();
                         if (any.Count == 0)
                         {
@@ -208,18 +216,7 @@ namespace Friendship
                             return;
                         } 
                         companion = any[rnd.Next(0, any.Count)];
-                            //int i = 0;
-                            //do
-                            //{
-                            //    companion = any[rnd.Next(0, any.Count)];
-                            //    i++;
-                            //    if(i==any.Count) break;
-                            //} while ((await Tgbot.GetChatMemberAsync(companion.Id, (int)companion.Id)).User.Username ==
-                            //         null);
-
-                            //cDictionary[user.findFF].Remove(companion);
-                            //username = await Tgbot.GetChatMemberAsync(e.CallbackQuery.From.Id, e.CallbackQuery.From.Id);
-                            username2 = await Tgbot.GetChatMemberAsync(companion.Id, (int)companion.Id);
+                        username2 = await Tgbot.GetChatMemberAsync(companion.Id, (int)companion.Id);
                             await Tgbot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId,
                                 $"Собеседник найден:\nИмя пользователя: @{username2.User.Username}\nГород: {companion.City}.\nИнформация: {companion.AboutMe}.");
                             await Tgbot.SendPhotoAsync(e.CallbackQuery.From.Id, new InputOnlineFile(companion.PhotoID));
@@ -257,38 +254,14 @@ namespace Friendship
                     }
                     case "sex_female":
                         if (user.state != User.State.selectSex) return;
-                        if (!user.IsDonate)
+                        if (!user.IsDonate && user.Sex==1)
                         {
                             user.state = User.State.wait;
                             await Tgbot.EditMessageTextAsync(e.CallbackQuery.From.Id, e.CallbackQuery.Message.MessageId,
                                 "Для поиска собеседников женского пола необходимо преобрести платную подписку.");
-                            string billId = "";
-                            int money = 70;
-                            var payUrl = Payment.AddTransaction(money, user, ref billId);
-                            if (payUrl == null)
-                            {
-                                await Tgbot.SendTextMessageAsync(e.CallbackQuery.From.Id,
-                                    "Произошла ошибка при создании счета. Попробуйте еще раз.", replyMarkup: KeyBack);
-                                return;
-                            }
-
-                            await Tgbot.SendTextMessageAsync(e.CallbackQuery.From.Id,
-                                $"Оплата подписки на сумму {money} р.\nДата: {DateTime.Now:dd.MMM.yyyy}\nСтатус: Не оплачено.\n\nОплатите счет по ссылке.\n{payUrl}",
-                                replyMarkup: new InlineKeyboardMarkup(
-                                    new List<List<InlineKeyboardButton>>()
-                                    {
-                                        new List<InlineKeyboardButton>()
-                                        {
-                                            InlineKeyboardButton.WithCallbackData("Проверить оплату", $"bill_{billId}")
-                                        },
-                                        new List<InlineKeyboardButton>()
-                                        {
-                                            InlineKeyboardButton.WithCallbackData("Назад", "back")
-                                        }
-                                    }));
+                            SendBill(user);
                             return;
                         }
-
                         any = Users.ToList().Where(x => x.FindFf == user.FindFf && x.Sex == 1 && x.Id != user.Id).ToList();
                         if (any.Count == 0)
                         {
@@ -352,6 +325,8 @@ namespace Friendship
             }
             catch
             {
+                var user = Users.FirstOrDefault(x => x.Id == e.CallbackQuery.From.Id);
+                if (user != null) user.state = User.State.main;
                 // ignored
             }
         }
@@ -366,22 +341,29 @@ namespace Friendship
                 if (user == null)
                 {
                     await using DB db = new DB();
-                    user = new User {Id = e.Message.From.Id, state = User.State.city};
+                    user = new User {Id = e.Message.From.Id, state = User.State.main};
                     Users.Add(user);
                     db.Add(user);
                     db.SaveChanges();
-                    await Tgbot.SendStickerAsync(message.From.Id,
-                        new InputOnlineFile("CAACAgIAAxkBAAK_HGAQINBHw7QKWWRV4LsEU4nNBxQ3AAKZAAPZvGoabgceWN53_gIeBA"));
+                    var key = new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("Изменить данные профиля", "change_data"));
+                        await Tgbot.SendStickerAsync(message.From.Id,
+                        new InputOnlineFile("CAACAgIAAxkBAAK_HGAQINBHw7QKWWRV4LsEU4nNBxQ3AAKZAAPZvGoabgceWN53_gIeBA"),replyMarkup: Keyboard);
                     await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                        "Добро пожаловать, для продолжения необходимо пройти регистрацию. Введите свой город:", replyMarkup: Keyboard);
+                        "Добро пожаловать, для продолжения необходимо пройти регистрацию.", replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("Создать анкету", "change_data")));
                     return;
                 }
 
                 InlineKeyboardMarkup sexKey;
                 switch (message.Text)
                 {
-                    case "Профиль":
+                    case "🆔 Ваша анкета":
                         if (user.state != User.State.main) return;
+                        if (!user.IsRegistered)
+                        {
+                            await Tgbot.SendTextMessageAsync(message.Chat.Id,
+                                "Для начала пройдите регистрацию.", replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("Создать анкету", "change_data")));
+                            break;
+                        }
                         var key = new InlineKeyboardMarkup(new List<InlineKeyboardButton>
                         {
                             InlineKeyboardButton.WithCallbackData("Изменить данные профиля", "change_data"),
@@ -390,12 +372,13 @@ namespace Friendship
                         try
                         {
                             await Tgbot.SendPhotoAsync(e.Message.From.Id, new InputOnlineFile(user.PhotoID),
-                                caption: "Ваше фото.");
+                                caption: "🌐Ваше фото:");
                         }
                         catch { }
 
+                        string subscribe = (user.IsDonate) ? "Активна" : "Неактивна";
                         await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                            $"Ваша анкета:\nИмя пользователя: {e.Message.From.Username}\nГород: {user.City}.\nИнформация: {user.AboutMe}.",
+                            $"ℹ️ Ваша анкета\n- - - - - - - - - - - - - - - - - - - - - - - -\n👤 Имя: {e.Message.From.FirstName}\n🔑 Ваш ID: {e.Message.From.Id}\n🏙 Ваш город: {user.City}\n▫️ Ваше описание: {user.AboutMe}\n🛒 Подписка: {subscribe}\n- - - - - - - - - - - - - - - - - - - - - - - -",
                             replyMarkup: key);
                         break;
                     case "/start":
@@ -404,12 +387,18 @@ namespace Friendship
                             "Вы в главном меню.",
                             replyMarkup: Keyboard);
                         break;
-                    case "Lorem ipsum":
+                    case "⚡️ Найти собеседника":
                         if (user.state != User.State.main) return;
+                        if (!user.IsRegistered)
+                        {
+                            await Tgbot.SendTextMessageAsync(message.Chat.Id,
+                                "Для начала пройдите регистрацию.", replyMarkup: new InlineKeyboardMarkup(InlineKeyboardButton.WithCallbackData("Создать анкету", "change_data")));
+                            break;
+                        }
                         if (user.FindFf == null)
                         {
                             await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                                "Вам необходимо выбрать категорию поиска. Сделать это можно в профиле.");
+                                "Вам необходимо выбрать категорию поиска. Сделать это можно в анкете.");
                             return;
                         }
                         user.state = User.State.selectSex;
@@ -425,21 +414,21 @@ namespace Friendship
                         await Tgbot.SendTextMessageAsync(message.From.Id,
                             "Выберите пол:", replyMarkup: sexKey);
                         break;
-                    case "Lorem ipsum2":
+                    case "💎 Наш канал":
                         await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                            "Текст.");
+                            "‼️ Наш новостной канал:\n✅ @interkriminal");
                         break;
-                    case "Lorem ipsum3":
+                    case "🔑 Полезные ссылки":
+                        const string text = "⚠️Эти приложения помогут Вам сохранить конфиденциальность данных:\n\n1️⃣ Приложение Briar отлично подойдёт тем, кто не доверяет свои конфиденциальные данные популярным социальным сетям.\n<a href=\"https://play.google.com/store/apps/details?id=org.briarproject.briar.android\">СКАЧАТЬ</a>\n\n2️⃣ Tor Browser не нуждается в представлении.\n <a href =\"https://play.google.com/store/apps/details?id=org.torproject.android\">СКАЧАТЬ</a>\n\n3️⃣ Element лучший в своём роде менеджер для приватных бесед.\n<a href=\"https://play.google.com/store/apps/details?id=im.vector.app\">СКАЧАТЬ</a>";
                         await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                            "Текст.");
+                            text,parseMode:ParseMode.Html, disableWebPagePreview:true);
                         break;
-                    case "Lorem ipsum4":
-                        await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                            "Текст.");
+                    case "💰 Подписка":
+                        SendBill(user);
                         break;
-                    case "Lorem ipsum5":
+                    case "ℹ️ Информация":
                         await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                            "Текст.");
+                            "⭐️ - Бот работает 24/7\n⭐️ -Бот полностью анонимен\n⭐️ -В боте вы можете найти себе соратника / цу ваших интересов\n⭐️ -Бот имеет платную подписку для поиска девушек / парней\n⭐️ -Виды оплат в боте: Qiwi Wallet \n\n❕Важно❕\n- Оплата подписки полностью автоматизирована\n- Что бы оплатить подписку нужно нажать на кнопку \"💰 Подписка\" на основной клавиатуре\n- Подписка оплачивается единоразово\n\n\n👤Техподдержка: @velikorusSS");
                         break;
                     default:
                     {
@@ -499,16 +488,17 @@ namespace Friendship
                                     return;
                                 }
 
-                                if (message.Text.Length > 50)
+                                if (message.Text.Length > 200)
                                 {
                                     await Tgbot.SendTextMessageAsync(message.Chat.Id,
-                                        "Ммм... Очень интересно, но слишком длинно. Попробуй уложиться в 50 символов.");
+                                        "Ммм... Очень интересно, но слишком длинно. Попробуй уложиться в 200 символов.");
                                     return;
                                 }
 
                                 db = new DB();
                                 db.Update(user);
                                 user.AboutMe = message.Text;
+                                user.IsRegistered = true;
                                 var find = new InlineKeyboardMarkup(
                                     InlineKeyboardButton.WithCallbackData("Выбрать категорию поиска", "search"));
                                 await Tgbot.SendTextMessageAsync(e.Message.From.Id, "Поздравляю с регистрацией.",
@@ -531,7 +521,44 @@ namespace Friendship
             }
             catch
             {
+                var user = Users.FirstOrDefault(x => x.Id == e.Message.From.Id);
+                if (user != null) user.state = User.State.main;
                 // ignored
+            }
+        }
+
+        private static async void SendBill(User user)
+        {
+            try
+            {
+                string billId = "";
+                int money = 500;
+                var payUrl = Payment.AddTransaction(money, user, ref billId);
+                if (payUrl == null)
+                {
+                    await Tgbot.SendTextMessageAsync(user.Id,
+                        "Произошла ошибка при создании счета. Попробуйте еще раз.", replyMarkup: KeyBack);
+                    return;
+                }
+
+                await Tgbot.SendTextMessageAsync(user.Id,
+                    $"Оплата подписки на сумму {money} р.\nДата: {DateTime.Now:dd.MMM.yyyy}\nСтатус: Не оплачено.\n\nОплатите счет по ссылке.\n{payUrl}",
+                    replyMarkup: new InlineKeyboardMarkup(
+                        new List<List<InlineKeyboardButton>>()
+                        {
+                            new List<InlineKeyboardButton>()
+                            {
+                                InlineKeyboardButton.WithCallbackData("Проверить оплату", $"bill_{billId}")
+                            },
+                            new List<InlineKeyboardButton>()
+                            {
+                                InlineKeyboardButton.WithCallbackData("Назад", "back")
+                            }
+                        }));
+            }
+            catch
+            {
+                if (user != null) user.state = User.State.main;
             }
         }
     }
